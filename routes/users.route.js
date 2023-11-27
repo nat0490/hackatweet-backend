@@ -10,10 +10,10 @@ const bcrypt = require('bcrypt');
 /* ENREGISTREMENT HACKATWEET = SIGN UP*/
 
 router.post('/signup', (req, res) => {
-  if (!checkBody(req.body, ['firstname', 'username', 'password'])) {
+  if (!checkBody(req.body, ['username', 'password'])) {
     res.status(500).json({ result: false, error: 'Missing or empty fields' });
     return;
-  } 
+  } ;
 
 /* CHECK IF USER ALREADY REGISTERED*/
 router.post('/signin', (req,res) => {
