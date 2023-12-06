@@ -13,10 +13,8 @@ router.post('/signup', (req, res) => {
   if (!checkBody(req.body, ['username', 'password'])) {
     res.status(500).json({ result: false, error: 'Missing or empty fields' });
     return;
-  } ;
-
+  }
 /* CHECK IF USER ALREADY REGISTERED*/
-router.post('/signin', (req,res) => {
   User.findOne({ username: req.body.username }).then(data => {
     if (data === null) {
       const hash = bcrypt.hashSync(req.body.password, 10);
@@ -37,7 +35,7 @@ router.post('/signin', (req,res) => {
     }
   });
   });
-})
+
 
 
 /* LOGIN HACKATWEET = SIGN IN  */
