@@ -46,6 +46,16 @@ router.get("/lastTweet", (req, res) => {
     .then((tweets) => res.json({ result: true, tweets }));
 });
 
+
+
+//OBTENIR TOUS LES TWEETS D'UN HASHTAG
+router.get("/hashtagNumber/:hashtag", (req,res) => {
+  const hashtagToSearch = req.params.hashtag;
+  Tweet.find({ hashtags: { $regex: new RegExp(hashtagToSearch, 'i') } })
+    .populate("user")
+    .then((tweets) => res.json({ result: true, tweets}))
+})
+
 //METTRE A JOUR NOMBRE DE LIKE
 router.put("/nbLike/:id", (req, res) => {
   Tweet.updateOne({ _id: req.params.id }, { $inc: { nbLike: 1 } }).then(() =>
