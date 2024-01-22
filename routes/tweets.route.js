@@ -13,6 +13,7 @@ router.post("/create", (req, res) => {
       date: date,
       nbLike: 0,
       hashtags: req.body.hashtags,
+      comment: [],
     });
     tweet.save().then(() => {
       console.log("Tweet saved!");
@@ -22,6 +23,36 @@ router.post("/create", (req, res) => {
     res.status(500).json({ result: false, error: "Missing fields" });
   }
 });
+
+//AJOUTER UN COMMENTAIRE
+router.put("/addComment/:id", (req,res) => {
+  const date = new Date();
+  const newComment = {
+    date: date,
+    userFrom: req.body.userId,
+    text: req.body.text,
+  }
+  Tweet.updateOne({ _id: req.params.id}, { $push: {comment: newComment}})
+    .then(data => {
+      if (data.modifiedCount === 0) {
+        res.json({ result: false, error: NOK})
+      } else {
+        res.json({ result: true, message: "Comment add"})
+      }
+    })
+});
+
+//SUPPRIMER UN COMMENTAIRE
+router.put("/removeComment/:id", (req,res) => {
+  Tweet.updateOne({ _id: req.params.id}, { $pull: {comment: req.body.commentId}})
+    .then(data => {
+      if (data.modifiedCount === 0) {
+        res.json({ result: false, error: NOK})
+      } else {
+        res.json({ result: true, message: "Comment remove"})
+      }
+    })
+})
 
 //SUPPRIMER UN TWEET
 router.delete("/delete", (req, res) => {
@@ -56,10 +87,17 @@ router.get("/hashtagNumber/:hashtag", (req,res) => {
     .then((tweets) => res.json({ result: true, tweets}))
 })
 
-//METTRE A JOUR NOMBRE DE LIKE
-router.put("/nbLike/:id", (req, res) => {
+//METTRE A JOUR NOMBRE DE LIKE ++
+router.put("/addNbLike/:id", (req, res) => {
   Tweet.updateOne({ _id: req.params.id }, { $inc: { nbLike: 1 } }).then(() =>
-    res.json({ nbLike: "update" })
+    res.json({ result: true, nbLike: "add one like" })
+  );
+});
+
+//METTRE A JOUR NOMBRE DE LIKE --
+router.put("/rmvNbLike/:id", (req, res) => {
+  Tweet.updateOne({ _id: req.params.id }, { $inc: { nbLike: -1 } }).then(() =>
+    res.json({ result: true, nbLike: "remove one like" })
   );
 });
 
