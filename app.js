@@ -7,10 +7,8 @@ var cors = require("cors");
 
 require("./models/connection");
 
-
 var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users.route");
-var trendsRouter = require("./routes/trend.route");
 var tweetsRouter = require("./routes/tweets.route");
 
 var app = express();
@@ -24,7 +22,6 @@ app.use(express.static(path.join(__dirname, "public")));
 
 app.use("/", indexRouter);
 app.use("/users", usersRouter);
-app.use("/trends", trendsRouter);
 app.use("/tweets", tweetsRouter);
 
 module.exports = app;

@@ -24,33 +24,107 @@ router.post("/create", (req, res) => {
   }
 });
 
+
+
 //AJOUTER UN COMMENTAIRE
-router.put("/addComment/:id", (req,res) => {
+// router.put("/addComment/:id", (req,res) => {
+//   const date = new Date();
+//   const newComment = {
+//     date: date,
+//     userFrom: req.body.userId,
+//     text: req.body.text,
+//   }
+//   Tweet.updateOne({ _id: req.params.id}, { $push: {comment: newComment}})
+//     .then(data => {
+//       if (data.modifiedCount === 0) {
+//         res.json({ result: false, error: NOK})
+//       } else {
+//         res.json({ result: true, message: newComment})
+//       }
+//     })
+// });
+
+
+
+
+//AJOUTER UN COMMENTAIRE V2
+//AFIN DE RECUPERER SON ID DANS LA REPONSE
+router.put("/addComment/:id", async (req, res) => {
   const date = new Date();
   const newComment = {
     date: date,
     userFrom: req.body.userId,
     text: req.body.text,
+    nbLike: 0,
+  };
+  try {
+    const updateResult = await Tweet.updateOne({ _id: req.params.id }, { $push: { comment: newComment } });
+    if (updateResult.modifiedCount === 0) {
+      res.json({ result: false, error: "Tweet not found" });
+    } else {
+      const updatedTweet = await Tweet.findOne({ _id: req.params.id });
+      const addedComment = updatedTweet.comment[updatedTweet.comment.length - 1];
+      res.json({ result: true, comment: addedComment });
+    }
+  } catch (error) {
+    res.json({ result: false, error: error.message });
   }
-  Tweet.updateOne({ _id: req.params.id}, { $push: {comment: newComment}})
-    .then(data => {
-      if (data.modifiedCount === 0) {
-        res.json({ result: false, error: NOK})
-      } else {
-        res.json({ result: true, message: "Comment add"})
-      }
-    })
 });
 
+
+
+//METTRE A JOUR NOMBRE DE LIKE COMMENTAIRE ++
+router.put("/:tweetId/addLikeComment/:commentId", (req, res) => {
+  const tweetId = req.params.tweetId;
+  const commentId = req.params.commentId;
+  Tweet.updateOne(
+    { _id: tweetId, "comment._id": commentId },
+    { $inc: { "comment.$.nbLike": 1 } }
+  )
+    .then(() => {
+      res.json({ result: true, nbLike: "add one like" });
+    })
+    .catch((error) => {
+      res.json({ result: false, error: error.message });
+    });
+});
+
+
+
+  
+
+//METTRE A JOUR NOMBRE DE LIKE COMMENTAIRE--
+router.put("/:tweetId/rmvLikeComment/:commentId", (req, res) => {
+  const tweetId = req.params.tweetId;
+  const commentId = req.params.commentId;
+  Tweet.updateOne(
+    { _id: tweetId, "comment._id": commentId },
+    { $inc: { "comment.$.nbLike": - 1 } }
+  )
+    .then(() => {
+      res.json({ result: true, nbLike: "remove one like" });
+    })
+    .catch((error) => {
+      res.json({ result: false, error: error.message });
+    });
+});
+
+
 //SUPPRIMER UN COMMENTAIRE
-router.put("/removeComment/:id", (req,res) => {
-  Tweet.updateOne({ _id: req.params.id}, { $pull: {comment: req.body.commentId}})
+router.delete("/:tweetId/removeComment/:commentId", (req,res) => {
+  const {tweetId, commentId} = req.params;
+  Tweet.updateOne(
+    { _id: tweetId, "comment._id": commentId}, 
+    { $pull: {comment: { _id: commentId }}})
     .then(data => {
       if (data.modifiedCount === 0) {
-        res.json({ result: false, error: NOK})
+        res.json({ result: false, error: "Nothing remove"})
       } else {
         res.json({ result: true, message: "Comment remove"})
       }
+    })
+    .catch((error)=> {
+      res.json({result:false, error: error.message});
     })
 })
 
@@ -70,13 +144,21 @@ router.delete("/delete", (req, res) => {
   }
 });
 
-//OBTENIR LES TWEETS
+
+
+
+//RECUPERER TOUS LES TWEETS
 router.get("/lastTweet", (req, res) => {
   Tweet.find()
-    .populate("user")
-    .then((tweets) => res.json({ result: true, tweets }));
+     .populate("user")
+     .populate('comment.userFrom')
+     .exec()
+     .then((tweets) => res.json({ result: true, tweets }))
+     .catch((error) => {
+        console.error("Error in /tweets/lastTweet route:", error);
+        res.status(500).json({ result: false, comment: "Internal server error" });
+     });
 });
-
 
 
 //OBTENIR TOUS LES TWEETS D'UN HASHTAG

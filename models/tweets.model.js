@@ -2,11 +2,11 @@ const mongoose = require("mongoose");
 
 const commentSchema = mongoose.Schema({
     date: Date,
-    userFrom: String,
+    userFrom: { type: mongoose.Schema.Types.ObjectId, ref: 'users' },
     text: String,
-})
+    nbLike: Number,
+});
 
-//VERIFIER LE NOM DE LA COLLECTION USERS
 const tweetSchema = mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'users'},
     description: String,
