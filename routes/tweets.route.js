@@ -1,6 +1,7 @@
 var express = require("express");
 var router = express.Router();
 const Tweet = require("../models/tweets.model");
+const Notification = require("../models/notifications.model");
 const { checkBody } = require("../module/checkBoby");
 
 //POSTER UN NEW TWEET
@@ -25,28 +26,6 @@ router.post("/create", (req, res) => {
 });
 
 
-
-//AJOUTER UN COMMENTAIRE
-// router.put("/addComment/:id", (req,res) => {
-//   const date = new Date();
-//   const newComment = {
-//     date: date,
-//     userFrom: req.body.userId,
-//     text: req.body.text,
-//   }
-//   Tweet.updateOne({ _id: req.params.id}, { $push: {comment: newComment}})
-//     .then(data => {
-//       if (data.modifiedCount === 0) {
-//         res.json({ result: false, error: NOK})
-//       } else {
-//         res.json({ result: true, message: newComment})
-//       }
-//     })
-// });
-
-
-
-
 //AJOUTER UN COMMENTAIRE V2
 //AFIN DE RECUPERER SON ID DANS LA REPONSE
 router.put("/addComment/:id", async (req, res) => {
@@ -64,6 +43,22 @@ router.put("/addComment/:id", async (req, res) => {
     } else {
       const updatedTweet = await Tweet.findOne({ _id: req.params.id });
       const addedComment = updatedTweet.comment[updatedTweet.comment.length - 1];
+//ajout notification
+      const newNotification = new Notification ({
+        fromUserName: req.body.userName, 
+        fromUserId: req.body.userId,
+        toUserId: updatedTweet.user, 
+        type: "Comment", 
+        tweetId: req.params.id, 
+        tweetDescription: req.body.text, 
+        time: date, 
+        isRead: false, 
+      });
+      newNotification.save().then(() => {
+        console.log("notification comment saved!");
+        //res.json({ result: true, newNotification });
+      });
+//Fin ajout notif 
       res.json({ result: true, comment: addedComment });
     }
   } catch (error) {
@@ -72,16 +67,33 @@ router.put("/addComment/:id", async (req, res) => {
 });
 
 
-
 //METTRE A JOUR NOMBRE DE LIKE COMMENTAIRE ++
 router.put("/:tweetId/addLikeComment/:commentId", (req, res) => {
-  const tweetId = req.params.tweetId;
-  const commentId = req.params.commentId;
+  const date = new Date();
+  //const tweetId = req.params.tweetId;
+  const {commentId, tweetId} = req.params;
+  const {commentText, fromUserName, toUserId, fromUserId} = req.body;
   Tweet.updateOne(
     { _id: tweetId, "comment._id": commentId },
     { $inc: { "comment.$.nbLike": 1 } }
   )
     .then(() => {
+//ajout notification
+      const newNotification = new Notification ({
+        fromUserName: fromUserName, 
+        fromUserId: fromUserId,
+        toUserId: toUserId, 
+        type: "Like", 
+        tweetId: commentId, 
+        tweetDescription: commentText, 
+        time: date, 
+        isRead: false, 
+      });
+      newNotification.save().then(() => {
+        console.log("notification like saved!");
+        //res.json({ result: true, newNotification });
+      });
+//Fin ajout notif 
       res.json({ result: true, nbLike: "add one like" });
     })
     .catch((error) => {
@@ -90,8 +102,6 @@ router.put("/:tweetId/addLikeComment/:commentId", (req, res) => {
 });
 
 
-
-  
 
 //METTRE A JOUR NOMBRE DE LIKE COMMENTAIRE--
 router.put("/:tweetId/rmvLikeComment/:commentId", (req, res) => {
@@ -134,7 +144,6 @@ router.delete("/delete", (req, res) => {
     res.status(500).json({ result: false, error: "Missing fields" });
   } else {
     Tweet.deleteOne({ _id: req.body.id }).then((dataDeleted) => {
-      console.log(dataDeleted);
       if (dataDeleted.deletedCount === 0) {
         res.status(500).json({ result: false, error: "Impossible to delete" });
       } else {
@@ -160,6 +169,19 @@ router.get("/lastTweet", (req, res) => {
      });
 });
 
+//RECUPERER UN TWEET
+router.get("/find/:id", (req, res) => {
+  Tweet.findOne({_id: req.params.id})
+     .populate("user")
+     .populate('comment.userFrom')
+     .exec()
+     .then((tweet) => res.json({ result: true, tweet }))
+     .catch((error) => {
+        console.error("Error in /tweets/find route:", error);
+        res.status(500).json({ result: false, comment: "Internal server error" });
+     });
+});
+
 
 //OBTENIR TOUS LES TWEETS D'UN HASHTAG
 router.get("/hashtagNumber/:hashtag", (req,res) => {
@@ -170,9 +192,29 @@ router.get("/hashtagNumber/:hashtag", (req,res) => {
 })
 
 //METTRE A JOUR NOMBRE DE LIKE ++
-router.put("/addNbLike/:id", (req, res) => {
-  Tweet.updateOne({ _id: req.params.id }, { $inc: { nbLike: 1 } }).then(() =>
-    res.json({ result: true, nbLike: "add one like" })
+router.put("/addNbLike/:tweetId", (req, res) => {
+  const date = new Date();
+  const { tweetId } = req.params;
+  const {tweetDescription, fromUserName, fromUserId, toUserId } = req.body;
+  const newNotification = new Notification ({
+    fromUserName: fromUserName, //Ecrire juste sont nom utilisateur => A MODIFIER!!!!
+    fromUserId: fromUserId,
+    toUserId: toUserId, //mettre un ID
+    type: "Like", 
+    tweetId: tweetId, 
+    tweetDescription: tweetDescription, 
+    time: date, 
+    isRead: false, 
+  });
+  Tweet.updateOne({ _id: req.params.id }, { $inc: { nbLike: 1 } })
+    .then(() =>
+//ajout notification
+    newNotification.save().then(() => {
+      console.log("notification like saved!");
+      //res.json({ result: true, newNotification });
+      res.json({ result: true, nbLike: "add one like" })
+    })
+//Fin ajout notif 
   );
 });
 
