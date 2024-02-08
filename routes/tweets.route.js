@@ -70,31 +70,31 @@ router.put("/addComment/:id", async (req, res) => {
 //METTRE A JOUR NOMBRE DE LIKE COMMENTAIRE ++
 router.put("/:tweetId/addLikeComment/:commentId", (req, res) => {
   const date = new Date();
-  //const tweetId = req.params.tweetId;
   const {commentId, tweetId} = req.params;
   const {commentText, fromUserName, toUserId, fromUserId} = req.body;
+  const newNotification = new Notification ({
+    fromUserName: fromUserName, 
+    fromUserId: fromUserId,
+    toUserId: toUserId, 
+    type: "Like", 
+    tweetId: commentId, 
+    tweetDescription: commentText, 
+    time: date, 
+    isRead: false, 
+  });
   Tweet.updateOne(
     { _id: tweetId, "comment._id": commentId },
     { $inc: { "comment.$.nbLike": 1 } }
   )
-    .then(() => {
-//ajout notification
-      const newNotification = new Notification ({
-        fromUserName: fromUserName, 
-        fromUserId: fromUserId,
-        toUserId: toUserId, 
-        type: "Like", 
-        tweetId: commentId, 
-        tweetDescription: commentText, 
-        time: date, 
-        isRead: false, 
-      });
-      newNotification.save().then(() => {
-        console.log("notification like saved!");
-        //res.json({ result: true, newNotification });
-      });
-//Fin ajout notif 
-      res.json({ result: true, nbLike: "add one like" });
+    .then((data) => {
+      if ( data.modifiedCount === 0) {
+        res.json({ result: false, nbLike: "noting change" });
+      } else {
+        newNotification.save().then(() => {
+          console.log("notification like saved!");
+        });
+        res.json({ result: true, nbLike: "add one like & notification" });
+      }
     })
     .catch((error) => {
       res.json({ result: false, error: error.message });
@@ -107,12 +107,13 @@ router.put("/:tweetId/addLikeComment/:commentId", (req, res) => {
 router.put("/:tweetId/rmvLikeComment/:commentId", (req, res) => {
   const tweetId = req.params.tweetId;
   const commentId = req.params.commentId;
-  Tweet.updateOne(
-    { _id: tweetId, "comment._id": commentId },
-    { $inc: { "comment.$.nbLike": - 1 } }
-  )
-    .then(() => {
-      res.json({ result: true, nbLike: "remove one like" });
+  Tweet.updateOne({ _id: tweetId, "comment._id": commentId }, { $inc: { "comment.$.nbLike": - 1 }})
+    .then((data) => {
+      if(data.modifiedCount === 0){
+        res.json({result: false, message: "nothing change"})
+      } else {
+        res.json({ result: true, nbLike: "remove one like" });
+      }
     })
     .catch((error) => {
       res.json({ result: false, error: error.message });
@@ -152,9 +153,6 @@ router.delete("/delete", (req, res) => {
     });
   }
 });
-
-
-
 
 //RECUPERER TOUS LES TWEETS
 router.get("/lastTweet", (req, res) => {
@@ -197,32 +195,44 @@ router.put("/addNbLike/:tweetId", (req, res) => {
   const { tweetId } = req.params;
   const {tweetDescription, fromUserName, fromUserId, toUserId } = req.body;
   const newNotification = new Notification ({
-    fromUserName: fromUserName, //Ecrire juste sont nom utilisateur => A MODIFIER!!!!
+    fromUserName: fromUserName, 
     fromUserId: fromUserId,
-    toUserId: toUserId, //mettre un ID
+    toUserId: toUserId, 
     type: "Like", 
     tweetId: tweetId, 
     tweetDescription: tweetDescription, 
     time: date, 
     isRead: false, 
   });
-  Tweet.updateOne({ _id: req.params.id }, { $inc: { nbLike: 1 } })
-    .then(() =>
-//ajout notification
-    newNotification.save().then(() => {
-      console.log("notification like saved!");
-      //res.json({ result: true, newNotification });
-      res.json({ result: true, nbLike: "add one like" })
-    })
-//Fin ajout notif 
-  );
+  Tweet.updateOne({ _id: tweetId }, { $inc: { nbLike: 1 } })
+    .then((data) => {
+      if (data.modifiedCount === 0) {
+        res.json({ result: false, error: "Nothing add"})
+      } else {
+        newNotification.save().then(() => {
+          res.json({ result: true, message: "nbr like ++ & notification like saved!" })
+        })
+        
+      }}
+    )
+  .catch((error)=> {
+    res.status(500).json({ result: false, error: error.message});
+  })
 });
 
 //METTRE A JOUR NOMBRE DE LIKE --
 router.put("/rmvNbLike/:id", (req, res) => {
-  Tweet.updateOne({ _id: req.params.id }, { $inc: { nbLike: -1 } }).then(() =>
-    res.json({ result: true, nbLike: "remove one like" })
-  );
+  Tweet.updateOne({ _id: req.params.id }, { $inc: { nbLike: -1 } })
+  .then((data) => {
+    if (data.modifiedCount === 0) {
+      res.json({result: false, message: "nothing change"})
+    } else {
+      res.json({ result: true, nbLike: "remove one like" })
+    }
+  })
+  .catch((error)=> {
+    res.status(500).json({result: false, error: error.message})
+  })
 });
 
 module.exports = router;
