@@ -11,7 +11,6 @@ const mongoose = require('mongoose');
 //AJOUTER NVX SCHEMA USER AVEC THEME & THINGS LIKE POUR CORRESPONDRE AVEC MOBILE
 //+ RESTE DU PROFIL: PHOTO, PERSONNE SUIVI, etc?
 
-
 const userSchema = mongoose.Schema(
     {
         firstname: {
@@ -27,10 +26,6 @@ const userSchema = mongoose.Schema(
             required: true,
             trim: true,
             message: ({ value }) => `Username ${value} already exist.`,
-            // validate: {
-            //     validator: val => /^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/?.test(val),
-            //     message: ({ value }) => `${value} is not a valid email address.`,
-            // },
         },
         password: {
             type:String,
@@ -46,7 +41,6 @@ const userSchema = mongoose.Schema(
         dateCreated: Date,
     }, 
     { timestamps: true, toJSON: { virtuals: true} }
-     
 );
 
 

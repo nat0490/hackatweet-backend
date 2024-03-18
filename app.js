@@ -15,6 +15,10 @@ var notificationRouter = require("./routes/notification.route");
 var app = express();
 
 app.use(cors());
+
+var fileUpload = require('express-fileupload');
+app.use(fileUpload());
+
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));

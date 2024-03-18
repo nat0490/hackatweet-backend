@@ -4,16 +4,64 @@ const Tweet = require("../models/tweets.model");
 const Notification = require("../models/notifications.model");
 const { checkBody } = require("../module/checkBoby");
 
+//POSTER UNE PHOTO SUR CLOUDINARY
+const cloudinary = require('cloudinary').v2;
+const fs = require('fs');
+
+
+
+router.post('/uploadPic',  async(req,res)=> {
+      try {
+        if (!req.files || Object.keys(req.files).length === 0) {
+            return res.status(400).json({ result: false, error: 'Aucun fichier n\'a été téléchargé.' });
+        }
+        const files = Object.values(req.files); // Récupérer tous les fichiers téléchargés
+        const uploadedImages = [];
+        // Envoyer chaque fichier vers Cloudinary
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+   
+            // Créer un flux de lecture des données du fichier
+            const fileStream = fs.createWriteStream(`./tmp/${file.name}`);
+            // Écrire les données du fichier dans un fichier temporaire sur le serveur
+            fileStream.write(file.data);
+            // Fermer le flux de lecture
+            fileStream.end();
+            // Attendre la fin de l'écriture des données dans le fichier
+            await new Promise((resolve, reject) => {
+                fileStream.on('finish', resolve);
+                fileStream.on('error', reject);
+            });
+            const resultCloudinary = await cloudinary.uploader.upload(`./tmp/${file.name}`); 
+            console.log('File uploaded:', resultCloudinary.secure_url);
+            //res.json({success: true, uploadedImage: resultCloudinary.secure_url });
+            uploadedImages.push(resultCloudinary.secure_url);
+          }
+          
+        // Envoyer la réponse avec les URLs des images sur Cloudinary
+        res.status(200).json({ result: true, uploadedImages });
+    } catch(error) {
+        console.error('Error uploading file to Cloudinary:', error);
+        res.status(500).json({ result: false, error: 'Une erreur est survenue lors de l\'envoi du fichier vers Cloudinary.' });
+    }
+});
+
+
+
+
 //POSTER UN NEW TWEET
 router.post("/create", (req, res) => {
   const date = new Date();
-  if (checkBody(req.body, ["user", "description", "hashtags"])) {
+  if (checkBody(req.body, ["user", ("pictures" || ["description", "hashtags"])])) {
+    const { user, description, pictures, hashtags, privat } = req.body;
     const tweet = new Tweet({
-      user: req.body.user,
-      description: req.body.description,
+      user: user,
+      description: description,
       date: date,
       nbLike: 0,
-      hashtags: req.body.hashtags,
+      privat: privat,
+      pictures: pictures,
+      hashtags: hashtags,
       comment: [],
     });
     tweet.save().then(() => {

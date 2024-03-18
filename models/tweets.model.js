@@ -12,9 +12,13 @@ const tweetSchema = mongoose.Schema({
     description: String,
     date: Date,
     nbLike: Number,
+    privat: Boolean,
+    pictures: [String],
     hashtags: [String],
     comment: [commentSchema],
-})
+    },
+    { timestamps: true, toJSON: { virtuals: true}}
+);
 
 const Tweet = mongoose.model('tweets', tweetSchema);
 
