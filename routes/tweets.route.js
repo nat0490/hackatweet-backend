@@ -9,6 +9,14 @@ const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 
 
+// cloudinary.config({
+  
+//   cloud_name: ENV["CLOUD_NAME"],
+//   api_key: ENV["API_KEY"],
+//   api_secret: ENV["API_SECRET"]
+// });
+
+
 
 router.post('/uploadPic',  async(req,res)=> {
       try {
