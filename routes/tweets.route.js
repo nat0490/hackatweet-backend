@@ -1,5 +1,6 @@
 var express = require("express");
 var router = express.Router();
+require('dotenv').config();
 const Tweet = require("../models/tweets.model");
 const Notification = require("../models/notifications.model");
 const { checkBody } = require("../module/checkBoby");
@@ -9,14 +10,10 @@ const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
 
 
-// cloudinary.config({
-  
-//   cloud_name: ENV["CLOUD_NAME"],
-//   api_key: ENV["API_KEY"],
-//   api_secret: ENV["API_SECRET"]
-// });
-
 cloudinary.config({
+  cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
+  api_key: process.env.CLOUDINARY_API_KEY,
+  api_secret: process.env.CLOUDINARY_API_SECRET,
   secure: true
 });
 
@@ -61,10 +58,53 @@ router.post('/uploadMultiPic',  async(req,res)=> {
 });
 
 
+//image a définir
+
+const image ='https://res.cloudinary.com/dawkemcl5/image/upload/v1710771725/qszoxaundh0nzb7gv9xb.jpg';
+
+router.post('/upload', async(req,res) => {
+  console.log("req",req.body);
+  // const file = req.files['files[0]'];
+  const file = req.body['files[0]'];
+  console.log("file bk:",file)
+
+
+  // if (!req.files || Object.keys(req.files).length === 0) {
+  //         return res.status(400).json({ result: false, error: 'Aucun fichier n\'a été téléchargé.' });
+  //       }
+
+  try{
+    const resultCloudinary = await cloudinary.uploader.upload(file);
+    console.log('File uploaded:', resultCloudinary.secure_url);
+
+  //   const resultCloudinary = await cloudinary.uploader.upload_stream({ resource_type: "auto" }, (error, result) => {
+  //     if (error) {
+  //       console.error('Error uploading file to Cloudinary:', error);
+  //       res.status(500).json({ result: false, error: 'Une erreur est survenue lors de l\'envoi du fichier vers Cloudinary.' });
+  //     } else {
+  //       console.log('File uploaded:', result.secure_url);
+  //       uploadedImages.push(result.secure_url);
+  //     }
+  //   }).end(file.data);
+  // }
+
+
+
+    res.status(200).json({ result: true, message: 'Image téléchargé' });
+  } catch (error){
+    console.error('Error uploading file to Cloudinary:', error);
+    res.status(500).json({ result: false, error: 'Une erreur est survenue lors de l\'envoi du fichier vers Cloudinary.' });
+  }
+  
+});
+
+
+
+
+
 //UPLOAD UNIQUE
 router.post('/uploadPic',  async(req,res)=> {
   // console.log(cloudinary.config());
-
       try {
         if (!req.files || Object.keys(req.files).length === 0) {
             return res.status(400).json({ result: false, error: 'Aucun fichier n\'a été téléchargé.' });
@@ -104,7 +144,7 @@ router.post('/uploadPic',  async(req,res)=> {
 
 
 
-
+//DELETE PICTURE FROM CLOUDY
 
 //POSTER UN NEW TWEET
 router.post("/create", (req, res) => {

@@ -1,12 +1,6 @@
 const mongoose = require('mongoose');
 
-// const userSchema = mongoose.Schema({
-// firstname: String,
-// username: String,
-// password: String,
-// token: String,
-  
-// });
+
 
 //AJOUTER NVX SCHEMA USER AVEC THEME & THINGS LIKE POUR CORRESPONDRE AVEC MOBILE
 //+ RESTE DU PROFIL: PHOTO, PERSONNE SUIVI, etc?
