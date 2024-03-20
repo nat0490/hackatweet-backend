@@ -13,7 +13,6 @@ var tweetsRouter = require("./routes/tweets.route");
 var notificationRouter = require("./routes/notification.route");
 
 var app = express();
-
 app.use(cors());
 
 // var fileUpload = require('express-fileupload');
@@ -28,7 +27,7 @@ app.use(express.urlencoded({ extended: false }));
 var bodyParser = require('body-parser');
 app.use(
     bodyParser.urlencoded({
-      extended: true,
+      extended: false,
     })
   );
 
