@@ -1,13 +1,23 @@
 var express = require("express");
 var router = express.Router();
-//require('dotenv').config();
+
 const Tweet = require("../models/tweets.model");
 const Notification = require("../models/notifications.model");
 const { checkBody } = require("../module/checkBoby");
 
-//POSTER UNE PHOTO SUR CLOUDINARY
+//CLOUDINARY
+//import multer from "multer";
+const Multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
+
+
+
+//const bodyParser = require('body-parser');
+//bodyParser.json([false]);
+
+
+
 
 
 cloudinary.config({
@@ -18,44 +28,70 @@ cloudinary.config({
 });
 
 
-//UPLOAD MULTIPLE
-router.post('/uploadMultiPic',  async(req,res)=> {
-  // console.log(cloudinary.config());
+/* TEST2 DROPZONE 
+      vvvvvvvv */
 
-      try {
-        if (!req.files || Object.keys(req.files).length === 0) {
-            return res.status(400).json({ result: false, error: 'Aucun fichier n\'a été téléchargé.' });
-        }
-        const files = Object.values(req.files); // Récupérer tous les fichiers téléchargés
-        const uploadedImages = [];
-        // Envoyer chaque fichier vers Cloudinary
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
-   
-            // Créer un flux de lecture des données du fichier
-            const fileStream = fs.createWriteStream(`./tmp/${file.name}`);
-            // Écrire les données du fichier dans un fichier temporaire sur le serveur
-            fileStream.write(file.data);
-            // Fermer le flux de lecture
-            fileStream.end();
-            // Attendre la fin de l'écriture des données dans le fichier
-            await new Promise((resolve, reject) => {
-                fileStream.on('finish', resolve);
-                fileStream.on('error', reject);
-            });
-            const resultCloudinary = await cloudinary.uploader.upload(`./tmp/${file.name}`); 
-            console.log('File uploaded:', resultCloudinary.secure_url);
-            //res.json({success: true, uploadedImage: resultCloudinary.secure_url });
-            uploadedImages.push(resultCloudinary.secure_url);
-          }
-          
-        // Envoyer la réponse avec les URLs des images sur Cloudinary
-        res.status(200).json({ result: true, uploadedImages });
-    } catch(error) {
-        console.error('Error uploading file to Cloudinary:', error);
-        res.status(500).json({ result: false, error: 'Une erreur est survenue lors de l\'envoi du fichier vers Cloudinary.' });
-    }
-});
+// function runMiddleware(req, res, fn) {
+//   return new Promise((resolve, reject) => {
+//     fn(req, res, (result) => {
+//       if (result instanceof Error) {
+//         return reject(result);
+//       }
+//       return resolve(result);
+//     });
+//   });
+// }
+
+
+const storage = Multer.memoryStorage();
+// const upload = Multer( {storage} );
+const upload  =  Multer ( {  dest : 'uploads/'  } );
+const type = upload.array('file');
+
+
+router.post('/upload2' , type , async(req,res) => {
+  //console.log(req.files);
+  // await runMiddleware( req, res, myUploadMiddleware);
+  // console.log("Middleware execution completed");
+  const allCloudinaryRes = [];
+
+  try {
+    
+    //for (const file of req.files) {
+      for (const key in req.files) {
+        const file = req.files[key];
+        console.log("file:",file);
+
+      //console.log(file);
+    
+      // const b64 = Buffer.from(file.buffer).toString("base64");
+      // let dataURI = "data:" + file.mimetype + ";base64," + b64;
+      const cloudinaryRes = await cloudinary.uploader.upload(file.path, {
+        folder: "dropzone-image",
+      });
+
+      console.log("Upload successful:", cloudinaryRes);
+      allCloudinaryRes.push(cloudinaryRes);
+  }
+  res.status(200).json({ message: "Upload sucessfull", allCloudinaryRes});
+  } catch(error) {
+    console.error("Error uploading files:", error);
+    res.status(500).json({ message: "Error uploading files" });
+  }
+ 
+})
+
+
+//A QUOI SA SERT? COMMENT LECRIRE?
+// const config = {
+//   api: {
+//     bodyParser: false,
+//   },
+// };
+
+/* ^^^^^^^^ 
+  TEST2 DROPZONE */
+
 
 
 //image a définir
@@ -63,17 +99,27 @@ router.post('/uploadMultiPic',  async(req,res)=> {
 const image ='https://res.cloudinary.com/dawkemcl5/image/upload/v1710771725/qszoxaundh0nzb7gv9xb.jpg';
 
 router.post('/upload', async(req,res) => {
-  const file = req.body['files[0]'];
-  console.log("objectURL:",file)
+  const file = req.files;
+  console.log(file);
+  
 
 
   // if (!req.files || Object.keys(req.files).length === 0) {
   //         return res.status(400).json({ result: false, error: 'Aucun fichier n\'a été téléchargé.' });
   //       }
 
+ 
   try{
-    const resultCloudinary = await cloudinary.uploader.upload(file);
-    console.log('File uploaded:', resultCloudinary.secure_url);
+
+    for (const key in req.files) {
+      const file = req.files[key];
+      console.log("file:",file);
+
+      
+
+      const resultCloudinary = await cloudinary.uploader.upload(file);
+      console.log('File uploaded:', resultCloudinary.secure_url);
+
 
   //   const resultCloudinary = await cloudinary.uploader.upload_stream({ resource_type: "auto" }, (error, result) => {
   //     if (error) {
@@ -85,6 +131,7 @@ router.post('/upload', async(req,res) => {
   //     }
   //   }).end(file.data);
   // }
+    }
 
     res.status(200).json({ result: true, message: 'Image téléchargé' });
   } catch (error){
@@ -129,6 +176,45 @@ router.post('/uploadPic',  async(req,res)=> {
        
             uploadedImages.push(resultCloudinary.secure_url);
            }
+          
+        // Envoyer la réponse avec les URLs des images sur Cloudinary
+        res.status(200).json({ result: true, uploadedImages });
+    } catch(error) {
+        console.error('Error uploading file to Cloudinary:', error);
+        res.status(500).json({ result: false, error: 'Une erreur est survenue lors de l\'envoi du fichier vers Cloudinary.' });
+    }
+});
+
+//UPLOAD MULTIPLE
+router.post('/uploadMultiPic',  async(req,res)=> {
+  // console.log(cloudinary.config());
+
+      try {
+        if (!req.files || Object.keys(req.files).length === 0) {
+            return res.status(400).json({ result: false, error: 'Aucun fichier n\'a été téléchargé.' });
+        }
+        const files = Object.values(req.files); // Récupérer tous les fichiers téléchargés
+        const uploadedImages = [];
+        // Envoyer chaque fichier vers Cloudinary
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+   
+            // Créer un flux de lecture des données du fichier
+            const fileStream = fs.createWriteStream(`./tmp/${file.name}`);
+            // Écrire les données du fichier dans un fichier temporaire sur le serveur
+            fileStream.write(file.data);
+            // Fermer le flux de lecture
+            fileStream.end();
+            // Attendre la fin de l'écriture des données dans le fichier
+            await new Promise((resolve, reject) => {
+                fileStream.on('finish', resolve);
+                fileStream.on('error', reject);
+            });
+            const resultCloudinary = await cloudinary.uploader.upload(`./tmp/${file.name}`); 
+            console.log('File uploaded:', resultCloudinary.secure_url);
+            //res.json({success: true, uploadedImage: resultCloudinary.secure_url });
+            uploadedImages.push(resultCloudinary.secure_url);
+          }
           
         // Envoyer la réponse avec les URLs des images sur Cloudinary
         res.status(200).json({ result: true, uploadedImages });
