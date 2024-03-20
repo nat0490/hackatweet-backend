@@ -1,6 +1,6 @@
 var express = require("express");
 var router = express.Router();
-require('dotenv').config();
+//require('dotenv').config();
 const Tweet = require("../models/tweets.model");
 const Notification = require("../models/notifications.model");
 const { checkBody } = require("../module/checkBoby");
@@ -63,10 +63,8 @@ router.post('/uploadMultiPic',  async(req,res)=> {
 const image ='https://res.cloudinary.com/dawkemcl5/image/upload/v1710771725/qszoxaundh0nzb7gv9xb.jpg';
 
 router.post('/upload', async(req,res) => {
-  console.log("req",req.body);
-  // const file = req.files['files[0]'];
   const file = req.body['files[0]'];
-  console.log("file bk:",file)
+  console.log("objectURL:",file)
 
 
   // if (!req.files || Object.keys(req.files).length === 0) {
@@ -87,8 +85,6 @@ router.post('/upload', async(req,res) => {
   //     }
   //   }).end(file.data);
   // }
-
-
 
     res.status(200).json({ result: true, message: 'Image téléchargé' });
   } catch (error){
