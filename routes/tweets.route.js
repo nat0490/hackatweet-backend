@@ -6,20 +6,9 @@ const Notification = require("../models/notifications.model");
 const { checkBody } = require("../module/checkBoby");
 
 //CLOUDINARY
-//import multer from "multer";
 const Multer = require('multer');
 const cloudinary = require('cloudinary').v2;
 const fs = require('fs');
-
-
-
-
-//const bodyParser = require('body-parser');
-//bodyParser.json([false]);
-
-
-
-
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -30,37 +19,13 @@ cloudinary.config({
 
 
 /* TEST2 DROPZONE 
-      vvvvvvvv */
-
-// function runMiddleware(req, res, fn) {
-//   return new Promise((resolve, reject) => {
-//     fn(req, res, (result) => {
-//       if (result instanceof Error) {
-//         return reject(result);
-//       }
-//       return resolve(result);
-//     });
-//   });
-// }
-
-
-// const storage = Multer.memoryStorage();
-// const upload = Multer( { storage : storage} );
-
-// const upload  =  Multer ( {  dest : 'uploads/'  } );
+    vvvvvvvv */
 const upload  =  Multer ( {  dest : '/tmp'  } );
 const type = upload.array('file');
 
-
 router.post('/upload2' , type , async(req,res) => {
-  //console.log(req.files);
-  // await runMiddleware( req, res, myUploadMiddleware);
-  // console.log("Middleware execution completed");
   const allCloudinaryRes = [];
-
   try {
-    
-    //for (const file of req.files) {
       for (const key in req.files) {
         const file = req.files[key];
         console.log("file:",file);
@@ -75,70 +40,11 @@ router.post('/upload2' , type , async(req,res) => {
     console.error("Error uploading files:", error);
     res.status(500).json({ message: "Error uploading files" });
   }
- 
-})
-
-
-//A QUOI SA SERT? COMMENT LECRIRE?
-// const config = {
-//   api: {
-//     bodyParser: false,
-//   },
-// };
-
-/* ^^^^^^^^ 
-  TEST2 DROPZONE */
-
-
-
-//image a définir
-
-const image ='https://res.cloudinary.com/dawkemcl5/image/upload/v1710771725/qszoxaundh0nzb7gv9xb.jpg';
-
-router.post('/upload', async(req,res) => {
-  const file = req.files;
-  console.log(file);
-  
-
-
-  // if (!req.files || Object.keys(req.files).length === 0) {
-  //         return res.status(400).json({ result: false, error: 'Aucun fichier n\'a été téléchargé.' });
-  //       }
-
- 
-  try{
-
-    for (const key in req.files) {
-      const file = req.files[key];
-      console.log("file:",file);
-
-      
-
-      const resultCloudinary = await cloudinary.uploader.upload(file);
-      console.log('File uploaded:', resultCloudinary.secure_url);
-
-
-  //   const resultCloudinary = await cloudinary.uploader.upload_stream({ resource_type: "auto" }, (error, result) => {
-  //     if (error) {
-  //       console.error('Error uploading file to Cloudinary:', error);
-  //       res.status(500).json({ result: false, error: 'Une erreur est survenue lors de l\'envoi du fichier vers Cloudinary.' });
-  //     } else {
-  //       console.log('File uploaded:', result.secure_url);
-  //       uploadedImages.push(result.secure_url);
-  //     }
-  //   }).end(file.data);
-  // }
-    }
-
-    res.status(200).json({ result: true, message: 'Image téléchargé' });
-  } catch (error){
-    console.error('Error uploading file to Cloudinary:', error);
-    res.status(500).json({ result: false, error: 'Une erreur est survenue lors de l\'envoi du fichier vers Cloudinary.' });
-  }
-  
 });
+/* ^^^^^^^^ 
+TEST2 DROPZONE */
 
-
+//DELETE PICTURE FROM CLOUDY
 
 
 
@@ -220,10 +126,6 @@ router.post('/uploadMultiPic',  async(req,res)=> {
         res.status(500).json({ result: false, error: 'Une erreur est survenue lors de l\'envoi du fichier vers Cloudinary.' });
     }
 });
-
-
-
-//DELETE PICTURE FROM CLOUDY
 
 //POSTER UN NEW TWEET
 router.post("/create", (req, res) => {
