@@ -1,9 +1,10 @@
 require("dotenv").config();
 var express = require("express");
+var cors = require("cors");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-var cors = require("cors");
+
 
 require("./models/connection");
 
@@ -14,6 +15,8 @@ var notificationRouter = require("./routes/notification.route");
 
 var app = express();
 app.use(cors());
+
+
 
 // var fileUpload = require('express-fileupload');
 // app.use(fileUpload());
