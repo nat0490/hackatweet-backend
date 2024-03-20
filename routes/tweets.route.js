@@ -47,7 +47,7 @@ cloudinary.config({
 // const storage = Multer.memoryStorage();
 // const upload = Multer( { storage : storage} );
 // const upload  =  Multer ( {  dest : 'uploads/'  } );
-const upload  =  Multer ( {  dest : './public/uploads/'  } );
+const upload  =  Multer ( {  dest : '/public/uploads/'  } );
 const type = upload.array('file');
 
 
@@ -62,17 +62,19 @@ router.post('/upload2' , type , async(req,res) => {
     //for (const file of req.files) {
       for (const key in req.files) {
         const file = req.files[key];
-        //console.log("file:",file);
+        console.log("file:",file);
 
 
     
       // const b64 = Buffer.from(file.buffer).toString("base64");
       // let dataURI = "data:" + file.mimetype + ";base64," + b64;
-      const cloudinaryRes = await cloudinary.uploader.upload(file.path, {
-        folder: "dropzone-image",
-      });
+      const cloudinaryRes = await cloudinary.uploader.upload(file.path
+      //   , {
+      //   folder: "dropzone-image",
+      // }
+      );
 
-      console.log("Upload successful:");
+      console.log("Upload successful for", file.path);
       allCloudinaryRes.push(cloudinaryRes.secure_url);
   }
   res.status(200).json({ message: "Upload sucessfull", allCloudinaryRes: allCloudinaryRes});
