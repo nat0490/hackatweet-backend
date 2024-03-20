@@ -47,7 +47,7 @@ cloudinary.config({
 // const storage = Multer.memoryStorage();
 // const upload = Multer( { storage : storage} );
 // const upload  =  Multer ( {  dest : 'uploads/'  } );
-const upload  =  Multer ( {  dest : '/public/uploads/'  } );
+const upload  =  Multer ( {  dest : '/uploads/'  } );
 const type = upload.array('file');
 
 
