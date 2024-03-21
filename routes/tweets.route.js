@@ -48,90 +48,94 @@ TEST2 DROPZONE */
 
 
 
-//UPLOAD UNIQUE
-router.post('/uploadPic',  async(req,res)=> {
-  // console.log(cloudinary.config());
-      try {
-        if (!req.files || Object.keys(req.files).length === 0) {
-            return res.status(400).json({ result: false, error: 'Aucun fichier n\'a été téléchargé.' });
-        }
+// //UPLOAD UNIQUE
+// router.post('/uploadPic',  async(req,res)=> {
+//   // console.log(cloudinary.config());
+//       try {
+//         if (!req.files || Object.keys(req.files).length === 0) {
+//             return res.status(400).json({ result: false, error: 'Aucun fichier n\'a été téléchargé.' });
+//         }
 
-        const uploadedImages = [];
+//         const uploadedImages = [];
 
-        // Envoyer chaque fichier vers Cloudinary
-        for (const key in req.files) {
-            const file = req.files[key];
-            // Créer un flux de lecture des données du fichier
-            const fileStream = fs.createWriteStream(`./tmp/${file.name}`);
+//         // Envoyer chaque fichier vers Cloudinary
+//         for (const key in req.files) {
+//             const file = req.files[key];
+//             // Créer un flux de lecture des données du fichier
+//             const fileStream = fs.createWriteStream(`./tmp/${file.name}`);
             
-            fileStream.write(file.data);   // Écrire les données du fichier dans un fichier temporaire sur le serveur
+//             fileStream.write(file.data);   // Écrire les données du fichier dans un fichier temporaire sur le serveur
             
-            fileStream.end();    // Fermer le flux de lecture
+//             fileStream.end();    // Fermer le flux de lecture
 
-            // Attendre la fin de l'écriture des données dans le fichier
-            await new Promise((resolve, reject) => {
-                fileStream.on('finish', resolve);
-                fileStream.on('error', reject);
-            });
+//             // Attendre la fin de l'écriture des données dans le fichier
+//             await new Promise((resolve, reject) => {
+//                 fileStream.on('finish', resolve);
+//                 fileStream.on('error', reject);
+//             });
 
-            const resultCloudinary = await cloudinary.uploader.upload(`./tmp/${file.name}`); 
-            console.log('File uploaded:', resultCloudinary.secure_url);
+//             const resultCloudinary = await cloudinary.uploader.upload(`./tmp/${file.name}`); 
+//             console.log('File uploaded:', resultCloudinary.secure_url);
        
-            uploadedImages.push(resultCloudinary.secure_url);
-           }
+//             uploadedImages.push(resultCloudinary.secure_url);
+//            }
           
-        // Envoyer la réponse avec les URLs des images sur Cloudinary
-        res.status(200).json({ result: true, uploadedImages });
-    } catch(error) {
-        console.error('Error uploading file to Cloudinary:', error);
-        res.status(500).json({ result: false, error: 'Une erreur est survenue lors de l\'envoi du fichier vers Cloudinary.' });
-    }
-});
+//         // Envoyer la réponse avec les URLs des images sur Cloudinary
+//         res.status(200).json({ result: true, uploadedImages });
+//     } catch(error) {
+//         console.error('Error uploading file to Cloudinary:', error);
+//         res.status(500).json({ result: false, error: 'Une erreur est survenue lors de l\'envoi du fichier vers Cloudinary.' });
+//     }
+// });
 
-//UPLOAD MULTIPLE
-router.post('/uploadMultiPic',  async(req,res)=> {
-  // console.log(cloudinary.config());
+// //UPLOAD MULTIPLE
+// router.post('/uploadMultiPic',  async(req,res)=> {
+//   // console.log(cloudinary.config());
 
-      try {
-        if (!req.files || Object.keys(req.files).length === 0) {
-            return res.status(400).json({ result: false, error: 'Aucun fichier n\'a été téléchargé.' });
-        }
-        const files = Object.values(req.files); // Récupérer tous les fichiers téléchargés
-        const uploadedImages = [];
-        // Envoyer chaque fichier vers Cloudinary
-        for (let i = 0; i < files.length; i++) {
-            const file = files[i];
+//       try {
+//         if (!req.files || Object.keys(req.files).length === 0) {
+//             return res.status(400).json({ result: false, error: 'Aucun fichier n\'a été téléchargé.' });
+//         }
+//         const files = Object.values(req.files); // Récupérer tous les fichiers téléchargés
+//         const uploadedImages = [];
+//         // Envoyer chaque fichier vers Cloudinary
+//         for (let i = 0; i < files.length; i++) {
+//             const file = files[i];
    
-            // Créer un flux de lecture des données du fichier
-            const fileStream = fs.createWriteStream(`./tmp/${file.name}`);
-            // Écrire les données du fichier dans un fichier temporaire sur le serveur
-            fileStream.write(file.data);
-            // Fermer le flux de lecture
-            fileStream.end();
-            // Attendre la fin de l'écriture des données dans le fichier
-            await new Promise((resolve, reject) => {
-                fileStream.on('finish', resolve);
-                fileStream.on('error', reject);
-            });
-            const resultCloudinary = await cloudinary.uploader.upload(`./tmp/${file.name}`); 
-            console.log('File uploaded:', resultCloudinary.secure_url);
-            //res.json({success: true, uploadedImage: resultCloudinary.secure_url });
-            uploadedImages.push(resultCloudinary.secure_url);
-          }
+//             // Créer un flux de lecture des données du fichier
+//             const fileStream = fs.createWriteStream(`./tmp/${file.name}`);
+//             // Écrire les données du fichier dans un fichier temporaire sur le serveur
+//             fileStream.write(file.data);
+//             // Fermer le flux de lecture
+//             fileStream.end();
+//             // Attendre la fin de l'écriture des données dans le fichier
+//             await new Promise((resolve, reject) => {
+//                 fileStream.on('finish', resolve);
+//                 fileStream.on('error', reject);
+//             });
+//             const resultCloudinary = await cloudinary.uploader.upload(`./tmp/${file.name}`); 
+//             console.log('File uploaded:', resultCloudinary.secure_url);
+//             //res.json({success: true, uploadedImage: resultCloudinary.secure_url });
+//             uploadedImages.push(resultCloudinary.secure_url);
+//           }
           
-        // Envoyer la réponse avec les URLs des images sur Cloudinary
-        res.status(200).json({ result: true, uploadedImages });
-    } catch(error) {
-        console.error('Error uploading file to Cloudinary:', error);
-        res.status(500).json({ result: false, error: 'Une erreur est survenue lors de l\'envoi du fichier vers Cloudinary.' });
-    }
-});
+//         // Envoyer la réponse avec les URLs des images sur Cloudinary
+//         res.status(200).json({ result: true, uploadedImages });
+//     } catch(error) {
+//         console.error('Error uploading file to Cloudinary:', error);
+//         res.status(500).json({ result: false, error: 'Une erreur est survenue lors de l\'envoi du fichier vers Cloudinary.' });
+//     }
+// });
 
 //POSTER UN NEW TWEET
 router.post("/create", (req, res) => {
   const date = new Date();
-  if (checkBody(req.body, ["user", ("pictures" || ["description", "hashtags"])])) {
+  if (checkBody(req.body, ["user", ("pictures"  || "description" )])) {
     const { user, description, pictures, hashtags, privat } = req.body;
+    //console.log(description, pictures);
+    if(pictures.length === 0 && description === "") {
+      res.status(500).json({ result: false, error: "Missing fields" });
+    } else {
     const tweet = new Tweet({
       user: user,
       description: description,
@@ -146,6 +150,7 @@ router.post("/create", (req, res) => {
       console.log("Tweet saved!");
       res.json({ result: true, tweet });
     });
+  };
   } else {
     res.status(500).json({ result: false, error: "Missing fields" });
   }
