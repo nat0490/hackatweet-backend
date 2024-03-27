@@ -28,12 +28,13 @@ router.post('/upload2' , type , async(req,res) => {
   try {
       for (const key in req.files) {
         const file = req.files[key];
-        console.log("file:",file);
+        // console.log("file:",file);
       // const b64 = Buffer.from(file.buffer).toString("base64");
       // let dataURI = "data:" + file.mimetype + ";base64," + b64;
       const cloudinaryRes = await cloudinary.uploader.upload(file.path, { folder: "dropzone-image",});
       console.log("Upload successful for", file);
-      allCloudinaryRes.push(cloudinaryRes.secure_url);
+      // console.log(cloudinaryRes);
+      allCloudinaryRes.push({url: cloudinaryRes.secure_url, cloudId: cloudinaryRes.public_id});
     }
   res.status(200).json({ message: "Upload sucessfull", allCloudinaryRes: allCloudinaryRes});
   } catch(error) {
@@ -44,88 +45,11 @@ router.post('/upload2' , type , async(req,res) => {
 /* ^^^^^^^^ 
 TEST2 DROPZONE */
 
-//DELETE PICTURE FROM CLOUDY
 
 
 
-// //UPLOAD UNIQUE
-// router.post('/uploadPic',  async(req,res)=> {
-//   // console.log(cloudinary.config());
-//       try {
-//         if (!req.files || Object.keys(req.files).length === 0) {
-//             return res.status(400).json({ result: false, error: 'Aucun fichier n\'a été téléchargé.' });
-//         }
 
-//         const uploadedImages = [];
 
-//         // Envoyer chaque fichier vers Cloudinary
-//         for (const key in req.files) {
-//             const file = req.files[key];
-//             // Créer un flux de lecture des données du fichier
-//             const fileStream = fs.createWriteStream(`./tmp/${file.name}`);
-            
-//             fileStream.write(file.data);   // Écrire les données du fichier dans un fichier temporaire sur le serveur
-            
-//             fileStream.end();    // Fermer le flux de lecture
-
-//             // Attendre la fin de l'écriture des données dans le fichier
-//             await new Promise((resolve, reject) => {
-//                 fileStream.on('finish', resolve);
-//                 fileStream.on('error', reject);
-//             });
-
-//             const resultCloudinary = await cloudinary.uploader.upload(`./tmp/${file.name}`); 
-//             console.log('File uploaded:', resultCloudinary.secure_url);
-       
-//             uploadedImages.push(resultCloudinary.secure_url);
-//            }
-          
-//         // Envoyer la réponse avec les URLs des images sur Cloudinary
-//         res.status(200).json({ result: true, uploadedImages });
-//     } catch(error) {
-//         console.error('Error uploading file to Cloudinary:', error);
-//         res.status(500).json({ result: false, error: 'Une erreur est survenue lors de l\'envoi du fichier vers Cloudinary.' });
-//     }
-// });
-
-// //UPLOAD MULTIPLE
-// router.post('/uploadMultiPic',  async(req,res)=> {
-//   // console.log(cloudinary.config());
-
-//       try {
-//         if (!req.files || Object.keys(req.files).length === 0) {
-//             return res.status(400).json({ result: false, error: 'Aucun fichier n\'a été téléchargé.' });
-//         }
-//         const files = Object.values(req.files); // Récupérer tous les fichiers téléchargés
-//         const uploadedImages = [];
-//         // Envoyer chaque fichier vers Cloudinary
-//         for (let i = 0; i < files.length; i++) {
-//             const file = files[i];
-   
-//             // Créer un flux de lecture des données du fichier
-//             const fileStream = fs.createWriteStream(`./tmp/${file.name}`);
-//             // Écrire les données du fichier dans un fichier temporaire sur le serveur
-//             fileStream.write(file.data);
-//             // Fermer le flux de lecture
-//             fileStream.end();
-//             // Attendre la fin de l'écriture des données dans le fichier
-//             await new Promise((resolve, reject) => {
-//                 fileStream.on('finish', resolve);
-//                 fileStream.on('error', reject);
-//             });
-//             const resultCloudinary = await cloudinary.uploader.upload(`./tmp/${file.name}`); 
-//             console.log('File uploaded:', resultCloudinary.secure_url);
-//             //res.json({success: true, uploadedImage: resultCloudinary.secure_url });
-//             uploadedImages.push(resultCloudinary.secure_url);
-//           }
-          
-//         // Envoyer la réponse avec les URLs des images sur Cloudinary
-//         res.status(200).json({ result: true, uploadedImages });
-//     } catch(error) {
-//         console.error('Error uploading file to Cloudinary:', error);
-//         res.status(500).json({ result: false, error: 'Une erreur est survenue lors de l\'envoi du fichier vers Cloudinary.' });
-//     }
-// });
 
 //POSTER UN NEW TWEET
 router.post("/create", (req, res) => {
@@ -270,6 +194,25 @@ router.delete("/:tweetId/removeComment/:commentId", (req,res) => {
     })
 })
 
+//DELETE PICTURE FROM CLOUDY
+router.post('/destroy/:cloudId', async(req,res) => {
+  const { cloudId } = req.params;
+  const newCloudId = decodeURIComponent(cloudId);
+  // console.log(newCloudId);
+  try {
+    const cloudinaryRes = await cloudinary.uploader.destroy(newCloudId, { invalidate: true /*, type: upload*/, resource_type: "image" })
+    if (cloudinaryRes.result !== "ok") {
+      res.status(500).json({ cloudinaryRes: cloudinaryRes});
+    } else {
+      res.status(200).json({ cloudinaryRes: cloudinaryRes});
+    }
+  } catch(error) {
+    console.error("Error removing files:", error);
+    res.status(500).json({ message: "Error removing files" });
+  }
+});
+
+
 //SUPPRIMER UN TWEET
 router.delete("/delete", (req, res) => {
   if (req.body.id === "") {
@@ -284,6 +227,33 @@ router.delete("/delete", (req, res) => {
     });
   }
 });
+
+//SUPPRIMER UN TWEET V2: supprimer tweet et photo de cloudy
+router.delete("/delete2", async (req, res) => {
+  try {
+    // Supprimer les images du Cloudinary
+    const tweet = await Tweet.findById(req.body.id);
+    for (const pic of tweet.pictures) {
+      if (pic.cloudId){
+/*const cloudinaryRes = */await cloudinary.uploader.destroy(pic.cloudId, { invalidate: true, resource_type: "image" });
+      // console.log(cloudinaryRes);
+      }
+      
+    };
+
+    // Supprimer le tweet dans la base de données
+    const dataDeleted = await Tweet.deleteOne({ _id: req.body.id });
+    if (dataDeleted.deletedCount === 0) {
+      res.status(500).json({ result: false, error: "Impossible to delete" });
+    } else {
+      res.json({ result: true });}
+  } catch (error) {
+    console.error("Error deleting tweet:", error);
+    res.status(500).json({ message: "Error deleting tweet" });
+  }
+});
+
+
 
 //RECUPERER TOUS LES TWEETS
 router.get("/lastTweet", (req, res) => {

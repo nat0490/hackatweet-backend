@@ -7,13 +7,18 @@ const commentSchema = mongoose.Schema({
     nbLike: Number,
 });
 
+const pictureSchema = mongoose.Schema({
+    url: String,
+    cloudId: String,
+})
+
 const tweetSchema = mongoose.Schema({
     user: { type: mongoose.Schema.Types.ObjectId, ref: 'users'},
     description: String,
     date: Date,
     nbLike: Number,
     privat: Boolean,
-    pictures: [String],
+    pictures: [pictureSchema],
     hashtags: [String],
     comment: [commentSchema],
     },
