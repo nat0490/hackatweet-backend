@@ -18,28 +18,11 @@ var app = express();
 
 const corsOptions = {
   origin: ['http://localhost:3001','http://localhost:3000', 'https://natflowst.vercel.app'], // Remplacez par votre origine autorisée
-  methods: ['GET', 'POST', 'UPDATE', 'DELETE'], // Méthodes HTTP autorisées
+  methods: ['GET', 'POST', 'PUT', 'DELETE'], // Méthodes HTTP autorisées
   allowedHeaders: ['Content-Type', 'Authorization'], // En-têtes autorisés
 };
+
 app.use(cors(corsOptions));
-
-
-// app.use(function(req, res, next) {
-//   const allowedOrigins = ['http://localhost:3000', 'https://natflowst.vercel.app'];
-//   const origin = req.headers.origin;
-//   if (allowedOrigins.includes(origin)) {
-//     res.header("Access-Control-Allow-Origin", origin);
-//   }
-//   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-//   next();
-// });
-// // Middleware pour activer CORS
-// app.use(cors({
-//   origin: 'https://natflowst.vercel.app' // Remplacez par votre origine autorisée
-// }));
-
-// var fileUpload = require('express-fileupload');
-// app.use(fileUpload());
 
 app.use(logger("dev"));
 app.use(express.json());
