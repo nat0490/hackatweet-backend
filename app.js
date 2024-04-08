@@ -17,7 +17,7 @@ var usersInfoRouter = require("./routes/usersInfo.route");
 var app = express();
 
 const corsOptions = {
-  origin: ['http://localhost:3000', 'https://natflowst.vercel.app'], // Remplacez par votre origine autorisée
+  origin: ['http://localhost:3001','http://localhost:3000', 'https://natflowst.vercel.app'], // Remplacez par votre origine autorisée
   methods: ['GET', 'POST', 'UPDATE', 'DELETE'], // Méthodes HTTP autorisées
   allowedHeaders: ['Content-Type', 'Authorization'], // En-têtes autorisés
 };
