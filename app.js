@@ -12,9 +12,31 @@ var indexRouter = require("./routes/index");
 var usersRouter = require("./routes/users.route");
 var tweetsRouter = require("./routes/tweets.route");
 var notificationRouter = require("./routes/notification.route");
+var usersInfoRouter = require("./routes/usersInfo.route");
 
 var app = express();
-app.use(cors());
+
+const corsOptions = {
+  origin: ['http://localhost:3000', 'https://natflowst.vercel.app'], // Remplacez par votre origine autorisée
+  methods: ['GET', 'POST', 'UPDATE', 'DELETE'], // Méthodes HTTP autorisées
+  allowedHeaders: ['Content-Type', 'Authorization'], // En-têtes autorisés
+};
+app.use(cors(corsOptions));
+
+
+// app.use(function(req, res, next) {
+//   const allowedOrigins = ['http://localhost:3000', 'https://natflowst.vercel.app'];
+//   const origin = req.headers.origin;
+//   if (allowedOrigins.includes(origin)) {
+//     res.header("Access-Control-Allow-Origin", origin);
+//   }
+//   res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+//   next();
+// });
+// // Middleware pour activer CORS
+// app.use(cors({
+//   origin: 'https://natflowst.vercel.app' // Remplacez par votre origine autorisée
+// }));
 
 // var fileUpload = require('express-fileupload');
 // app.use(fileUpload());
@@ -38,5 +60,6 @@ app.use("/", indexRouter);
 app.use("/users", usersRouter);
 app.use("/tweets", tweetsRouter);
 app.use("/notification", notificationRouter);
+app.use("/usersInfo", usersInfoRouter);
 
 module.exports = app;

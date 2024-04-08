@@ -34,9 +34,11 @@ router.post('/upload2' , type , async(req,res) => {
       const cloudinaryRes = await cloudinary.uploader.upload(file.path, { folder: "dropzone-image",});
       console.log("Upload successful for", file);
       // console.log(cloudinaryRes);
+      // console.log(cloudinaryRes);
       allCloudinaryRes.push({url: cloudinaryRes.secure_url, cloudId: cloudinaryRes.public_id});
-    }
-  res.status(200).json({ message: "Upload sucessfull", allCloudinaryRes: allCloudinaryRes});
+      }
+    // console.log("allCloudyRes:",allCloudinaryRes);
+    res.status(200).json({ message: "Upload sucessfull", allCloudinaryRes: allCloudinaryRes});
   } catch(error) {
     console.error("Error uploading files:", error);
     res.status(500).json({ message: "Error uploading files" });

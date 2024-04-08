@@ -33,6 +33,7 @@ const userSchema = mongoose.Schema(
             default: "user",
         },
         dateCreated: Date,
+        userInfo: { type: mongoose.Schema.Types.ObjectId, ref: 'usersInfo'},
     }, 
     { timestamps: true, toJSON: { virtuals: true} }
 );
