@@ -3,6 +3,7 @@ var router = express.Router();
 
 const Tweet = require("../models/tweets.model");
 const Notification = require("../models/notifications.model");
+const User = require('../models/users.model');
 const { checkBody } = require("../module/checkBoby");
 
 //CLOUDINARY
@@ -49,10 +50,6 @@ TEST2 DROPZONE */
 
 
 
-
-
-
-
 //POSTER UN NEW TWEET
 router.post("/create", (req, res) => {
   const date = new Date();
@@ -85,38 +82,87 @@ router.post("/create", (req, res) => {
 
 //AJOUTER UN COMMENTAIRE V2
 //AFIN DE RECUPERER SON ID DANS LA REPONSE
-router.put("/addComment/:id", async (req, res) => {
+// router.put("/addComment/:id", async (req, res) => {
+//   const date = new Date();
+//   const newComment = {
+//     date: date,
+//     userFrom: req.body.userId,
+//     text: req.body.text,
+//     nbLike: 0,
+//   };
+//   try {
+//     const updateResult = await Tweet.updateOne({ _id: req.params.id }, { $push: { comment: newComment } });
+//     if (updateResult.modifiedCount === 0) {
+//       res.json({ result: false, error: "Tweet not found" });
+//     } else {
+//       const updatedTweet = await Tweet.findOne({ _id: req.params.id });
+//       const addedComment = updatedTweet.comment[updatedTweet.comment.length - 1];
+// //ajout notification
+//       const newNotification = new Notification ({
+//         fromUserName: req.body.userName, 
+//         fromUserId: req.body.userId,
+//         toUserId: updatedTweet.user, 
+//         type: "Comment", 
+//         tweetId: req.params.id, 
+//         tweetDescription: req.body.text, 
+//         time: date, 
+//         isRead: false, 
+//       });
+//       newNotification.save().then(() => {
+//         console.log("notification comment saved!");
+//         //res.json({ result: true, newNotification });
+//       });
+// //Fin ajout notif 
+//       res.json({ result: true, comment: addedComment });
+//     }
+//   } catch (error) {
+//     res.json({ result: false, error: error.message });
+//   }
+// });
+
+
+//AJOUTER UN COMMENTAIRE V3
+//AFIN DE RECUPERER SON ID DANS LA REPONSE
+router.put("/addCommentV3/:id/from/:userTokenFrom", async (req, res) => {
   const date = new Date();
-  const newComment = {
-    date: date,
-    userFrom: req.body.userId,
-    text: req.body.text,
-    nbLike: 0,
-  };
+  const {id, userTokenFrom} = req.params;
+
   try {
-    const updateResult = await Tweet.updateOne({ _id: req.params.id }, { $push: { comment: newComment } });
-    if (updateResult.modifiedCount === 0) {
-      res.json({ result: false, error: "Tweet not found" });
+    // const userIdTo = await User.findOne({token : userTokenTo}).lean();
+    const userIdFrom = await User.findOne({token : userTokenFrom}).lean();
+    if(userIdFrom) {
+        
+      const newComment = {
+        date: date,
+        userFrom: userIdFrom._id,
+        text: req.body.text,
+        nbLike: 0,
+      };
+
+      const updateResult = await Tweet.updateOne({ _id: id}, { $push: { comment: newComment } });
+      if (updateResult.modifiedCount === 0) {
+        res.json({ result: false, error: "Tweet not found" });
+      } else {
+        const updatedTweet = await Tweet.findOne({ _id: req.params.id });
+        const addedComment = updatedTweet.comment[updatedTweet.comment.length - 1];
+  //ajout notification
+        const newNotification = new Notification ({
+          fromUserName: req.body.userName, 
+          fromUserId: userIdFrom._id,
+          toUserId: updatedTweet.user, 
+          type: "Comment", 
+          tweetId: id, 
+          tweetDescription: req.body.text, 
+          time: date, 
+          isRead: false, 
+        });
+        const newNotif = await newNotification.save()
+          // console.log("notification comment saved!", newNotif);
+  //Fin ajout notif 
+        res.status(200).json({ result: true, comment: addedComment });
+      }
     } else {
-      const updatedTweet = await Tweet.findOne({ _id: req.params.id });
-      const addedComment = updatedTweet.comment[updatedTweet.comment.length - 1];
-//ajout notification
-      const newNotification = new Notification ({
-        fromUserName: req.body.userName, 
-        fromUserId: req.body.userId,
-        toUserId: updatedTweet.user, 
-        type: "Comment", 
-        tweetId: req.params.id, 
-        tweetDescription: req.body.text, 
-        time: date, 
-        isRead: false, 
-      });
-      newNotification.save().then(() => {
-        console.log("notification comment saved!");
-        //res.json({ result: true, newNotification });
-      });
-//Fin ajout notif 
-      res.json({ result: true, comment: addedComment });
+      res.status(500).json({result: false, comment: "no user found"});
     }
   } catch (error) {
     res.json({ result: false, error: error.message });
@@ -124,38 +170,45 @@ router.put("/addComment/:id", async (req, res) => {
 });
 
 
+
 //METTRE A JOUR NOMBRE DE LIKE COMMENTAIRE ++
-router.put("/:tweetId/addLikeComment/:commentId", (req, res) => {
+router.put("/:tweetId/addLikeComment/:commentId", async (req, res) => {
   const date = new Date();
   const {commentId, tweetId} = req.params;
-  const {commentText, fromUserName, toUserId, fromUserId} = req.body;
-  const newNotification = new Notification ({
-    fromUserName: fromUserName, 
-    fromUserId: fromUserId,
-    toUserId: toUserId, 
-    type: "Like", 
-    tweetId: commentId, 
-    tweetDescription: commentText, 
-    time: date, 
-    isRead: false, 
-  });
-  Tweet.updateOne(
-    { _id: tweetId, "comment._id": commentId },
-    { $inc: { "comment.$.nbLike": 1 } }
-  )
-    .then((data) => {
-      if ( data.modifiedCount === 0) {
-        res.json({ result: false, nbLike: "noting change" });
+  const {commentText, fromUserName, toUserId, fromUserToken} = req.body;
+  try {
+    const userIdFrom = await User.findOne({token : fromUserToken}).lean();
+    if (userIdFrom) {
+      const newNotification = new Notification ({
+        fromUserName: fromUserName, 
+        fromUserId: userIdFrom,
+        toUserId: toUserId, 
+        type: "Like", 
+        tweetId: commentId, 
+        tweetDescription: commentText, 
+        time: date, 
+        isRead: false, 
+      });
+      const tweetUpdate = await  Tweet.updateOne(
+                                        { _id: tweetId, "comment._id": commentId },
+                                        { $inc: { "comment.$.nbLike": 1 } }
+                                      );
+      if (tweetUpdate.modifiedCount === 0) {
+        console.log("nothing update");
+        res.status(500).json({result: false, nbLike: "nothing update"})
       } else {
-        newNotification.save().then(() => {
-          console.log("notification like saved!");
-        });
-        res.json({ result: true, nbLike: "add one like & notification" });
+        const newNotif = await newNotification.save();
+        console.log("notification like saved!", newNotif);
+        res.status(200).json({ result: true, nbLike: "add one like & notification" });
       }
-    })
-    .catch((error) => {
-      res.json({ result: false, error: error.message });
-    });
+    } else {
+      console.log("no user found");
+      res.status(500).json({result: false, comment: "no user found"});
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({result: false, comment: "Erreur serveur", error});
+  }
 });
 
 
@@ -293,34 +346,47 @@ router.get("/hashtagNumber/:hashtag", (req,res) => {
 })
 
 //METTRE A JOUR NOMBRE DE LIKE ++
-router.put("/addNbLike/:tweetId", (req, res) => {
+router.put("/addNbLike/:tweetId", async(req, res) => {
   const date = new Date();
   const { tweetId } = req.params;
-  const {tweetDescription, fromUserName, fromUserId, toUserId } = req.body;
-  const newNotification = new Notification ({
-    fromUserName: fromUserName, 
-    fromUserId: fromUserId,
-    toUserId: toUserId, 
-    type: "Like", 
-    tweetId: tweetId, 
-    tweetDescription: tweetDescription, 
-    time: date, 
-    isRead: false, 
-  });
-  Tweet.updateOne({ _id: tweetId }, { $inc: { nbLike: 1 } })
-    .then((data) => {
-      if (data.modifiedCount === 0) {
-        res.json({ result: false, error: "Nothing add"})
+  const {tweetDescription, fromUserName, fromUserToken, toUserId } = req.body;
+  try {
+    const userIdFrom = await User.findOne({token : fromUserToken}).lean();
+    if (userIdFrom) {
+      // console.log("userfound");
+      const newNotification = new Notification ({
+        fromUserName: fromUserName, 
+        fromUserId: userIdFrom,
+        toUserId: toUserId, 
+        type: "Like", 
+        tweetId: tweetId, 
+        tweetDescription: tweetDescription, 
+        time: date, 
+        isRead: false, 
+      });
+
+      const tweetUpdate = await Tweet.updateOne({ _id: tweetId }, { $inc: { nbLike: 1 } });
+      // console.log(tweetUpdate);
+      if (tweetUpdate.modifiedCount === 0){
+        res.status(500).json({ result: false, error: "Nothing update"})
       } else {
-        newNotification.save().then(() => {
-          res.json({ result: true, message: "nbr like ++ & notification like saved!" })
-        })
-        
-      }}
-    )
-  .catch((error)=> {
-    res.status(500).json({ result: false, error: error.message});
-  })
+        // console.log("try to save new notif");
+        const newNotif = await newNotification.save();
+
+
+        // console.log(newNotif);
+        // console.log("notification like saved!", newNotif);
+        res.status(200).json({ result: true, comment: "add one like & notification" });
+      }
+
+    } else{
+      console.log("no user found");
+      res.status(500).json({result: false, comment: "no user found"});
+    }
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({result: false, comment: "Erreur serveur", error});
+  }
 });
 
 //METTRE A JOUR NOMBRE DE LIKE --

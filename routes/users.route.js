@@ -101,6 +101,20 @@ router.post('/signin', async (req, res) => {
   }
 });
 
+//Trouver un utilisateur
+router.get('/findOneId/:userToken', async(req, res) => {
+  const {userToken} = req.params;
+  try {
+    const data = await User.findOne({token : userToken});
+    if (data) {
+      res.status(200).json({result: true, _id: data._id})
+    }
+    console.log(data._id);
+  } catch (error) {
+    res.status(500).json({result: false, message: "Erreur serveur"})
+  }
+});
+
 
 
 

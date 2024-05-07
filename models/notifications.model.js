@@ -5,7 +5,8 @@ const mongoose = require('mongoose');
 
 const notificationSchema = mongoose.Schema({
     fromUserName: String, //Ecrire juste sont nom utilisateur
-    fromUserId: String,
+    // fromUserId: String,
+    fromUserId: { type: mongoose.Schema.Types.ObjectId, ref: 'users'},
     toUserId: String, //mettre un ID
     type: String, //Like ou comment
     tweetId: String, 
