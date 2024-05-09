@@ -1,22 +1,26 @@
 var express = require("express");
 var router = express.Router();
 const Notification = require("../models/notifications.model");
+const User = require("../models/users.model");
 
 
 //GET ALL NOTIFICATION
 
 //GET NOTIFICATION FOR ONE USER
-router.get("/findNotification/:userId", (req,res)=> {
-    const { userId } = req.params;
-    Notification.find({ toUserId: userId })
-        .then((notifs) => {
-            res.json({result: true, notifs})
-        })
-        .catch((error) => {
-            console.error("Error in /notification/findNotification route:", error);
-            res.status(500).json({ result: false, comment: "Internal server error" });
-        })
-    });
+router.get("/findNotification/:userToken", async(req,res)=> {
+    const { userToken } = req.params;
+    try {
+        const userFrom = await User.findOne({token : userToken}).lean();
+        if(userFrom) {
+            const userNotif = await Notification.find({ toUserId: userFrom._id }).lean();
+            res.status(200).json({result: true, userNotif});
+        } else {
+            res.status(500).json({result: false, message: "noUser"});
+    }} catch (error) {
+        // console.error("Error in /notification/findNotification route:", error);
+        res.status(500).json({ result: false, comment: "Internal server error" });
+    }
+});
 
 
 //UPDATE READ

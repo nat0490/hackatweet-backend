@@ -19,6 +19,8 @@ cloudinary.config({
 });
 
 
+//Test écoute modification (ajout/retrait) tweet
+
 /* TEST2 DROPZONE 
     vvvvvvvv */
 const upload  =  Multer ( {  dest : '/tmp'  } );
@@ -51,74 +53,37 @@ TEST2 DROPZONE */
 
 
 //POSTER UN NEW TWEET
-router.post("/create", (req, res) => {
+router.post("/create", async (req, res) => {
+  // if (checkBody(req.body, ["user", ("pictures"  || "description" )])) {
   const date = new Date();
-  if (checkBody(req.body, ["user", ("pictures"  || "description" )])) {
-    const { user, description, pictures, hashtags, privat } = req.body;
-    //console.log(description, pictures);
-    if(pictures.length === 0 && description === "") {
-      res.status(500).json({ result: false, error: "Missing fields" });
-    } else {
-    const tweet = new Tweet({
-      user: user,
-      description: description,
-      date: date,
-      nbLike: 0,
-      privat: privat,
-      pictures: pictures,
-      hashtags: hashtags,
-      comment: [],
-    });
-    tweet.save().then(() => {
-      console.log("Tweet saved!");
-      res.json({ result: true, tweet });
-    });
-  };
-  } else {
-    res.status(500).json({ result: false, error: "Missing fields" });
-  }
+  const { user, description, pictures, hashtags, privat } = req.body;
+    try {
+       //console.log(description, pictures);
+       const userFrom = await User.findOne({token : user}).lean();
+       if(userFrom) {
+
+        if(pictures.length === 0 && description === "") {
+          res.status(500).json({ result: false, message: "MissingFields" });
+        } else {
+        const tweet = new Tweet({
+          user: userFrom._id,
+          description: description,
+          date: date,
+          nbLike: 0,
+          privat: privat,
+          pictures: pictures,
+          hashtags: hashtags,
+          comment: [],
+        });
+        const savedTweet = await tweet.save();
+        // console.log("Tweet saved!");
+        res.status(200).json({ result: true, savedTweet });
+    }} else {
+      res.status(500).json({ result: false, message: "noUser" });
+  }} catch (error){
+      res.status(500).json({ result: false, message: "Erreur serveur" })
+    }
 });
-
-
-//AJOUTER UN COMMENTAIRE V2
-//AFIN DE RECUPERER SON ID DANS LA REPONSE
-// router.put("/addComment/:id", async (req, res) => {
-//   const date = new Date();
-//   const newComment = {
-//     date: date,
-//     userFrom: req.body.userId,
-//     text: req.body.text,
-//     nbLike: 0,
-//   };
-//   try {
-//     const updateResult = await Tweet.updateOne({ _id: req.params.id }, { $push: { comment: newComment } });
-//     if (updateResult.modifiedCount === 0) {
-//       res.json({ result: false, error: "Tweet not found" });
-//     } else {
-//       const updatedTweet = await Tweet.findOne({ _id: req.params.id });
-//       const addedComment = updatedTweet.comment[updatedTweet.comment.length - 1];
-// //ajout notification
-//       const newNotification = new Notification ({
-//         fromUserName: req.body.userName, 
-//         fromUserId: req.body.userId,
-//         toUserId: updatedTweet.user, 
-//         type: "Comment", 
-//         tweetId: req.params.id, 
-//         tweetDescription: req.body.text, 
-//         time: date, 
-//         isRead: false, 
-//       });
-//       newNotification.save().then(() => {
-//         console.log("notification comment saved!");
-//         //res.json({ result: true, newNotification });
-//       });
-// //Fin ajout notif 
-//       res.json({ result: true, comment: addedComment });
-//     }
-//   } catch (error) {
-//     res.json({ result: false, error: error.message });
-//   }
-// });
 
 
 //AJOUTER UN COMMENTAIRE V3
@@ -129,12 +94,12 @@ router.put("/addCommentV3/:id/from/:userTokenFrom", async (req, res) => {
 
   try {
     // const userIdTo = await User.findOne({token : userTokenTo}).lean();
-    const userIdFrom = await User.findOne({token : userTokenFrom}).lean();
-    if(userIdFrom) {
+    const userFrom = await User.findOne({token : userTokenFrom}).lean();
+    if(userFrom) {
         
       const newComment = {
         date: date,
-        userFrom: userIdFrom._id,
+        userFrom: userFrom._id,
         text: req.body.text,
         nbLike: 0,
       };
@@ -322,6 +287,8 @@ router.get("/lastTweet", (req, res) => {
         res.status(500).json({ result: false, comment: "Internal server error" });
      });
 });
+
+
 
 //RECUPERER UN TWEET
 router.get("/find/:id", (req, res) => {
