@@ -17,7 +17,7 @@ var usersInfoRouter = require("./routes/usersInfo.route");
 var app = express();
 
 const corsOptions = {
-  origin: ['http://localhost:3001','http://localhost:3000', 'https://natflowst.vercel.app'], // Remplacez par votre origine autorisée
+  origin: ['http://localhost:3001','http://localhost:3000', 'https://natflowst.vercel.app', 'https://flowst-backend.vercel.app'], 
   methods: ['GET', 'POST', 'PUT', 'DELETE'], // Méthodes HTTP autorisées
   allowedHeaders: ['Content-Type', 'Authorization'], // En-têtes autorisés
 };
@@ -29,12 +29,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
 //Vraiment utile?
-var bodyParser = require('body-parser');
-app.use(
-    bodyParser.urlencoded({
-      extended: false,
-    })
-  );
+// var bodyParser = require('body-parser');
+// app.use(
+//     bodyParser.urlencoded({
+//       extended: false,
+//     })
+//   );
 
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
